@@ -5,22 +5,21 @@
 
 #include "queue.h"
 
-const int LOOP_COUNT = 100000;
+const int LOOP_COUNT = 10000000;
 atomic_int write_fails = 0;
 atomic_int read_fails = 0;
 
 void* reader_thread(Queue* q) {
     for (int i = 0; i < LOOP_COUNT; i++) {
         int *pop_res = Pop_Queue(q);
+
         if (pop_res == NULL) {
-            usleep(1);
             --i;
 
             read_fails++;
             continue;
         }
 
-        printf("Pop res is: %d\n", *pop_res);
         free(pop_res);
     }
 
@@ -33,7 +32,6 @@ void* writer_thread(Queue* q) {
         *tester = i;
 
         if (!Push_Queue(q, tester)) {
-            usleep(1);
             --i;
 
             write_fails++;
@@ -44,7 +42,7 @@ void* writer_thread(Queue* q) {
 }
 
 int queue_experiment() {
-    Queue *queue = malloc(sizeof(Queue));
+    Queue *queue = (Queue *)calloc(1, sizeof(Queue));
     if (queue == NULL) {
         perror("Couldn't allocate memory");
         return 1;
@@ -60,7 +58,6 @@ int queue_experiment() {
 
     pthread_join(writer, NULL);
     pthread_join(reader, NULL);
-
 
     printf("Total write fails: %d. Total read fails: %d\n", write_fails, read_fails);
 
